@@ -30,3 +30,50 @@ sudo kill 23673
 ``
 
 哒哒~~解决！
+
+今天用这个办法不灵，因为：fuser 不能 -n？？？
+
+4c32759b87a1:MockBankOTPWebApp fayefei$ sudo fuser -n tcp 3000
+Password:
+Unknown option: n
+fuser: [-cfu] file ...
+    -c  file is treated as mount point
+    -f  the report is only for the named files
+    -u  print username of pid in parenthesis
+
+然后其他的方法查到线程ID，但是kill不了：
+
+4c32759b87a1:MockBankOTPWebApp fayefei$ lsof -i tcp:3000
+COMMAND   PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    69578 fayefei   13u  IPv6 0xf15ed80625ac167b      0t0  TCP *:hbci (LISTEN)
+4c32759b87a1:MockBankOTPWebApp fayefei$ kill -15 69578
+======
+4c32759b87a1:MockBankOTPWebApp fayefei$ sudo kill 69578
+======
+4c32759b87a1:MockBankOTPWebApp fayefei$ pgrep node
+69578
+4c32759b87a1:MockBankOTPWebApp fayefei$ pkill node
+4c32759b87a1:MockBankOTPWebApp fayefei$ pgrep node
+69578
+
+
+
+最后还是用 -9 kill的
+4c32759b87a1:MockBankOTPWebApp fayefei$ lsof -PiTCP -sTCP:LISTEN
+COMMAND   PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Python   4358 fayefei    4u  IPv4 0xf15ed80609e5bc13      0t0  TCP localhost:9217 (LISTEN)
+idea    13753 fayefei  187u  IPv4 0xf15ed8061c6b631b      0t0  TCP localhost:6942 (LISTEN)
+idea    13753 fayefei  518u  IPv4 0xf15ed8062019231b      0t0  TCP localhost:63342 (LISTEN)
+java    22366 fayefei  268u  IPv6 0xf15ed806272c2bbb      0t0  TCP localhost:2014 (LISTEN)
+node    69578 fayefei   13u  IPv6 0xf15ed80625ac167b      0t0  TCP *:3000 (LISTEN)
+4c32759b87a1:MockBankOTPWebApp fayefei$ kill -9 69578
+4c32759b87a1:MockBankOTPWebApp fayefei$ lsof -PiTCP -sTCP:LISTEN
+COMMAND   PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Python   4358 fayefei    4u  IPv4 0xf15ed80609e5bc13      0t0  TCP localhost:9217 (LISTEN)
+idea    13753 fayefei  187u  IPv4 0xf15ed8061c6b631b      0t0  TCP localhost:6942 (LISTEN)
+idea    13753 fayefei  518u  IPv4 0xf15ed8062019231b      0t0  TCP localhost:63342 (LISTEN)
+java    22366 fayefei  268u  IPv6 0xf15ed806272c2bbb      0t0  TCP localhost:2014 (LISTEN)
+[1]+  Killed: 9               node app.js
+4c32759b87a1:MockBankOTPWebApp fayefei$ node app.js
+MockBankOTPWebApp is listening on http://:::3000
+
